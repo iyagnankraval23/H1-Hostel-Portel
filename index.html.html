@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<title>H1 Hostel Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Lora:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* ───────────── TOKENS ───────────── */
+:root{
+  --bg:#f5f2ed; --bg2:#edeae3; --surface:#fff; --surface2:#faf9f7;
+  --border:#e2ddd6; --text:#2c2824; --text2:#6b6460; --text3:#9e9893;
+  --accent:#4a7fa5; --accent2:#6b9fc1; --accent-soft:#e8f1f7;
+  --success:#5a9e78; --success-soft:#eaf4ee;
+  --warning:#c4884a; --warning-soft:#fdf2e6;
+  --danger:#b85c5c;  --danger-soft:#faeded;
+  --pending:#9e85b3; --pending-soft:#f3eef8;
+  --sh:0 2px 16px rgba(44,40,36,.07); --sh-lg:0 8px 40px rgba(44,40,36,.13);
+  --r:16px; --r-sm:10px;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --f:'DM Sans',sans-serif; --fd:'Lora',serif;
+  --nav-h:64px; --bottom-h:68px;
+}
+[data-theme="dark"]{
+  --bg:#1a1714; --bg2:#201d1a; --surface:#262220; --surface2:#2e2b28;
+  --border:#3d3a36; --text:#f0ece6; --text2:#b0a89e; --text3:#706860;
+  --accent:#6b9fc1; --accent2:#8ab5d4; --accent-soft:#1e2f3c;
+  --success-soft:#1a2e22; --warning-soft:#2e2215;
+  --danger-soft:#2e1a1a; --pending-soft:#231d2e;
+  --sh:0 2px 16px rgba(0,0,0,.3); --sh-lg:0 8px 40px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--f);background:var(--bg);color:var(--text);
+  min-height:100vh;min-height:100dvh;
+  transition:background .3s,color .3s;line-height:1.6;
+  overscroll-behavior:none;
+}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── TOP BAR ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav-h);
+  background:rgba(245,242,237,.92);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  transition:background .3s;
+}
+[data-theme="dark"] .topbar{background:rgba(26,23,20,.92)}
+.logo{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--fd);font-size:1rem;font-weight:600;color:var(--text);
+  cursor:pointer;user-select:none;
+}
+.logo-box{width:34px;height:34px;border-radius:9px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.icon-btn{
+  width:40px;height:40px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:17px;transition:all .2s var(--ease);-webkit-appearance:none;
+}
+.icon-btn:active{transform:scale(.93)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;height:var(--bottom-h);
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  box-shadow:0 -4px 20px rgba(0,0,0,.06);
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  cursor:pointer;border:none;background:none;font-family:var(--f);
+  padding:6px 4px;transition:all .2s var(--ease);color:var(--text3);-webkit-appearance:none;min-height:44px;
+}
+.bnav-item:active{transform:scale(.9)}
+.bnav-icon-wrap{padding:3px 12px;border-radius:10px;transition:all .25s var(--ease)}
+.bnav-icon{font-size:20px;line-height:1}
+.bnav-label{font-size:10px;font-weight:600;letter-spacing:.03em;transition:color .2s}
+.bnav-item.active .bnav-icon-wrap{background:var(--accent-soft)}
+.bnav-item.active .bnav-label{color:var(--accent)}
+
+/* ── DESKTOP TABS ── */
+.desktop-tabs{
+  display:none;position:fixed;top:var(--nav-h);left:0;
+  width:210px;height:calc(100vh - var(--nav-h));
+  background:var(--surface);border-right:1px solid var(--border);
+  flex-direction:column;gap:2px;padding:14px 10px;overflow-y:auto;
+}
+.dtab{
+  display:flex;align-items:center;gap:10px;padding:11px 13px;
+  border-radius:var(--r-sm);font-size:.875rem;font-weight:500;color:var(--text2);
+  cursor:pointer;border:none;background:none;font-family:var(--f);transition:all .2s;width:100%;text-align:left;
+}
+.dtab:hover{background:var(--surface2);color:var(--text)}
+.dtab.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.dtab-icon{font-size:17px;flex-shrink:0}
+
+/* ── LAYOUT ── */
+.main{
+  padding-top:calc(var(--nav-h) + 16px);
+  padding-bottom:calc(var(--bottom-h) + 16px);
+  padding-left:16px;padding-right:16px;
+  max-width:760px;margin:0 auto;
+}
+.page{display:none}
+.page.active{display:block;animation:fadeUp .35s var(--ease) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SPINNER ── */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:12px}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:.85rem;color:var(--text2)}
+
+/* ── HOME ── */
+.hero{padding:12px 0 8px;text-align:center}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--accent-soft);color:var(--accent);
+  border:1px solid rgba(74,127,165,.3);padding:5px 14px;
+  border-radius:50px;font-size:.73rem;font-weight:700;letter-spacing:.04em;margin-bottom:14px;
+}
+.hero h1{font-family:var(--fd);font-size:clamp(1.6rem,5vw,2.4rem);font-weight:600;line-height:1.22;margin-bottom:10px}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero p{font-size:.88rem;color:var(--text2);margin-bottom:18px;max-width:400px;margin-left:auto;margin-right:auto}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);animation:fadeUp .4s var(--ease) both}
+.stat-icon{font-size:20px;margin-bottom:4px}
+.stat-num{font-family:var(--fd);font-size:1.7rem;font-weight:600}
+.stat-label{font-size:.68rem;color:var(--text2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:1px}
+.section-header{margin-bottom:10px}
+.section-title{font-family:var(--fd);font-size:1.15rem;font-weight:600;margin-bottom:2px}
+.section-sub{font-size:.78rem;color:var(--text2)}
+.issues-list{display:flex;flex-direction:column;gap:8px}
+.issue-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 13px;display:flex;align-items:center;gap:10px;box-shadow:var(--sh)}
+.issue-emoji{font-size:18px;flex-shrink:0}
+.issue-info{flex:1;min-width:0}
+.issue-name{font-size:.8rem;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.issue-bar-bg{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.issue-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 1s var(--ease)}
+.issue-count{font-size:.7rem;color:var(--text3);min-width:44px;text-align:right}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:13px 22px;border-radius:var(--r-sm);font-size:.9rem;font-weight:600;
+  font-family:var(--f);cursor:pointer;border:none;transition:all .2s var(--ease);
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:48px;-webkit-appearance:none;white-space:nowrap;
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(74,127,165,.3)}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-full{width:100%}
+.btn-sm{padding:8px 13px;font-size:.78rem;min-height:36px}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.88}
+
+/* ── FORM ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:20px;box-shadow:var(--sh-lg);margin:6px 0 20px}
+.form-title{font-family:var(--fd);font-size:1.25rem;margin-bottom:4px}
+.form-sub{font-size:.8rem;color:var(--text2);margin-bottom:18px}
+.fgroup{margin-bottom:16px}
+.flabel{display:block;font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:.01em}
+.flabel .opt{color:var(--text3);font-weight:400}
+.finput,.fselect,.ftextarea{
+  width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:var(--r-sm);font-size:.9rem;font-family:var(--f);color:var(--text);
+  transition:all .2s var(--ease);outline:none;-webkit-appearance:none;appearance:none;min-height:48px;
+}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(74,127,165,.12)}
+.finput::placeholder,.ftextarea::placeholder{color:var(--text3)}
+.fselect{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239e9893' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;cursor:pointer}
+.ftextarea{resize:vertical;min-height:100px}
+.urgency-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.urgency-pill{padding:12px 6px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--bg);font-size:.8rem;font-weight:700;font-family:var(--f);cursor:pointer;transition:all .2s;color:var(--text2);text-align:center;min-height:46px;-webkit-appearance:none}
+.urgency-pill:active{transform:scale(.94)}
+.urgency-pill.u-low{border-color:var(--success);background:var(--success-soft);color:var(--success)}
+.urgency-pill.u-medium{border-color:var(--warning);background:var(--warning-soft);color:var(--warning)}
+.urgency-pill.u-high{border-color:var(--danger);background:var(--danger-soft);color:var(--danger)}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r-sm);padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg)}
+.upload-zone:hover,.upload-zone:active{border-color:var(--accent);background:var(--accent-soft)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:22px;margin-bottom:5px}
+.upload-hint{font-size:.8rem;color:var(--text2)}
+.upload-hint strong{color:var(--accent)}
+#upload-name{font-size:.75rem;color:var(--success);margin-top:4px}
+
+/* ── LOG ── */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.filter-row::-webkit-scrollbar{display:none}
+.fsearch{padding:11px 13px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);font-size:.85rem;font-family:var(--f);color:var(--text);outline:none;transition:all .2s;flex:1;min-width:140px;min-height:44px;-webkit-appearance:none}
+.fsearch:focus{border-color:var(--accent)}
+.fchip{padding:0 12px;height:44px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);font-size:.78rem;font-family:var(--f);color:var(--text);cursor:pointer;outline:none;transition:all .2s;white-space:nowrap;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%239e9893' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+.fchip:focus{border-color:var(--accent)}
+.c-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:10px;transition:all .2s;animation:fadeUp .3s var(--ease) both}
+.c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.c-id{font-size:.68rem;font-weight:700;color:var(--text3);letter-spacing:.06em}
+.c-room{font-size:.68rem;color:var(--text3);margin-top:2px}
+.badge{padding:3px 9px;border-radius:50px;font-size:.66rem;font-weight:800;letter-spacing:.04em;white-space:nowrap}
+.badge-pending{background:var(--pending-soft);color:var(--pending)}
+.badge-progress{background:var(--warning-soft);color:var(--warning)}
+.badge-resolved{background:var(--success-soft);color:var(--success)}
+.c-cat{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:50px;margin-bottom:7px}
+.c-desc{font-size:.84rem;color:var(--text2);line-height:1.55;margin-bottom:10px}
+.c-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;border-top:1px solid var(--border);padding-top:9px}
+.c-meta{font-size:.7rem;color:var(--text3);display:flex;align-items:center;gap:3px}
+.udot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.ud-low{background:var(--success)}.ud-medium{background:var(--warning)}.ud-high{background:var(--danger)}
+.resolved-banner{display:none;align-items:center;gap:7px;background:var(--success-soft);border:1px solid var(--success);border-radius:var(--r-sm);padding:9px 12px;font-size:.78rem;font-weight:600;color:var(--success);margin-top:8px}
+.c-card.resolved .resolved-banner{display:flex}
+.empty{text-align:center;padding:60px 20px;color:var(--text2)}
+.empty-icon{font-size:42px;margin-bottom:10px}
+.empty h3{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.empty p{font-size:.8rem}
+
+/* ── ADMIN ── */
+.admin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:10px}
+.admin-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.admin-id{font-size:.68rem;font-weight:700;color:var(--text3);letter-spacing:.06em}
+.admin-cat{font-size:.8rem;font-weight:600;color:var(--accent);margin-top:2px}
+.admin-desc{font-size:.82rem;color:var(--text2);line-height:1.5;margin-bottom:9px}
+.admin-chips{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.achip{font-size:.7rem;color:var(--text2);background:var(--bg2);border-radius:50px;padding:2px 9px;display:flex;align-items:center;gap:3px}
+.admin-actions{display:flex;gap:8px;align-items:center}
+.status-sel{flex:1;padding:9px 11px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--bg);font-size:.8rem;font-family:var(--f);color:var(--text);outline:none;transition:all .2s;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%239e9893' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px;min-height:42px}
+.status-sel:focus{border-color:var(--accent)}
+.a-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.a-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.a-stat-num{font-family:var(--fd);font-size:1.5rem;font-weight:600}
+.a-stat-label{font-size:.68rem;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.login-card{max-width:360px;margin:24px auto;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 22px;box-shadow:var(--sh-lg);text-align:center}
+.login-icon{font-size:38px;margin-bottom:12px}
+.login-card h2{font-family:var(--fd);font-size:1.3rem;margin-bottom:5px}
+.login-card p{font-size:.82rem;color:var(--text2);margin-bottom:18px}
+.login-hint{margin-top:12px;font-size:.73rem;color:var(--text3);background:var(--bg2);border-radius:var(--r-sm);padding:9px;text-align:left}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:calc(var(--bottom-h) + 10px);left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 16px;box-shadow:var(--sh-lg);display:flex;align-items:center;gap:10px;
+  font-size:.875rem;font-weight:500;z-index:999;
+  opacity:0;transition:all .35s var(--ease);pointer-events:none;
+  width:calc(100% - 32px);max-width:400px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast-icon{font-size:20px;flex-shrink:0}
+.toast-title{font-weight:700;color:var(--text);font-size:.875rem}
+.toast-msg{font-size:.74rem;color:var(--text2);margin-top:1px}
+
+/* ── FOOTER ── */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:22px 16px;text-align:center;margin-bottom:var(--bottom-h)}
+.footer-logo{font-family:var(--fd);font-size:.95rem;font-weight:600;margin-bottom:5px}
+.footer-tag{font-size:.76rem;color:var(--text2);max-width:380px;margin:0 auto 6px;line-height:1.6}
+.footer-copy{font-size:.68rem;color:var(--text3)}
+
+/* ── DESKTOP ≥768px ── */
+@media(min-width:768px){
+  .bottom-nav{display:none}
+  .desktop-tabs{display:flex}
+  .main{margin-left:210px;max-width:none;padding-left:28px;padding-right:28px;padding-bottom:28px}
+  .main-inner{max-width:720px}
+  .toast{bottom:20px;left:auto;right:20px;transform:translateY(16px);width:auto;max-width:380px}
+  .toast.show{transform:translateY(0)}
+  footer{margin-bottom:0}
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .a-stats{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo" onclick="navTo('home')">
+    <div class="logo-box">🏠</div>
+    <span>H1 Hostel</span>
+  </div>
+  <button class="icon-btn" id="darkBtn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+</header>
+
+<!-- DESKTOP SIDE TABS -->
+<nav class="desktop-tabs">
+  <button class="dtab active" data-page="home"   onclick="navTo('home')">  <span class="dtab-icon">🏠</span>Home</button>
+  <button class="dtab"        data-page="submit" onclick="navTo('submit')"><span class="dtab-icon">📝</span>Submit</button>
+  <button class="dtab"        data-page="log"    onclick="navTo('log')">   <span class="dtab-icon">📋</span>Complaint Log</button>
+  <button class="dtab"        data-page="admin"  onclick="navTo('admin')"> <span class="dtab-icon">🔐</span>Admin</button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+ <div class="main-inner">
+
+  <!-- HOME -->
+  <section class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-badge">🎓 Nirma University · H1 Hostel</div>
+      <h1>Complaint &amp; Feedback <em>Portal</em></h1>
+      <p>Your voice matters — every complaint gets heard and addressed by hostel authorities.</p>
+      <div class="hero-btns">
+        <button class="btn btn-primary" onclick="navTo('submit')">📝 Submit Complaint</button>
+        <button class="btn btn-outline" onclick="navTo('log')">📋 View Status</button>
+      </div>
+    </div>
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-num">…</div><div class="stat-label">Loading</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="section-header">
+      <div class="section-title">📊 Common Issues Tracker</div>
+      <div class="section-sub">Most frequently reported at H1 Hostel</div>
+    </div>
+    <div class="issues-list" id="issuesList">
+      <div style="text-align:center;padding:28px;color:var(--text3);font-size:.85rem;">Loading…</div>
+    </div>
+  </section>
+
+  <!-- SUBMIT -->
+  <section class="page" id="page-submit">
+    <div class="form-card">
+      <div class="form-title">📝 Submit a Complaint</div>
+      <div class="form-sub">Fields marked * are required. Name is optional — you may submit anonymously.</div>
+      <div class="fgroup">
+        <label class="flabel">Your Name <span class="opt">(optional)</span></label>
+        <input class="finput" id="f-name" type="text" placeholder="e.g. Arjun Mehta" autocomplete="name"/>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Room Number *</label>
+        <input class="finput" id="f-room" type="text" placeholder="e.g. 204" inputmode="numeric"/>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Category *</label>
+        <select class="fselect" id="f-cat">
+          <option value="">— Select a category —</option>
+          <option>Maintenance</option><option>Cleanliness</option><option>Water</option>
+          <option>Electricity</option><option>Internet / WiFi</option><option>Mess / Food</option>
+          <option>Behaviour Issues</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Description *</label>
+        <textarea class="ftextarea" id="f-desc" placeholder="Describe the issue clearly so it can be resolved quickly…"></textarea>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Urgency Level *</label>
+        <div class="urgency-row">
+          <button class="urgency-pill" id="up-low"    onclick="setUrgency('Low')">🟢 Low</button>
+          <button class="urgency-pill" id="up-medium" onclick="setUrgency('Medium')">🟡 Medium</button>
+          <button class="urgency-pill" id="up-high"   onclick="setUrgency('High')">🔴 High</button>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Upload Image <span class="opt">(optional)</span></label>
+        <div class="upload-zone">
+          <input type="file" id="f-img" accept="image/*" onchange="handleUpload(this)"/>
+          <div class="upload-icon">📎</div>
+          <div class="upload-hint">Tap to add a photo or <strong>browse</strong></div>
+          <div id="upload-name"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitComplaint()" id="submitBtn">Submit Complaint →</button>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section class="page" id="page-log">
+    <div style="margin-bottom:12px">
+      <div class="section-title">📋 Complaint Log</div>
+      <div class="section-sub">All submitted complaints &amp; their resolution status</div>
+    </div>
+    <div class="filter-row">
+      <input class="fsearch" type="search" id="logSearch" placeholder="🔍 Search…" oninput="renderLog()"/>
+      <select class="fchip" id="logCat" onchange="renderLog()">
+        <option value="">All Categories</option>
+        <option>Maintenance</option><option>Cleanliness</option><option>Water</option>
+        <option>Electricity</option><option>Internet / WiFi</option><option>Mess / Food</option>
+        <option>Behaviour Issues</option><option>Other</option>
+      </select>
+      <select class="fchip" id="logStatus" onchange="renderLog()">
+        <option value="">All Status</option>
+        <option>Pending</option><option>In Progress</option><option>Resolved</option>
+      </select>
+    </div>
+    <div id="logList"><div class="loader"><div class="spinner"></div><div class="loader-text">Loading complaints…</div></div></div>
+  </section>
+
+  <!-- ADMIN -->
+  <section class="page" id="page-admin">
+    <div id="adminLogin" class="login-card">
+      <div class="login-icon">🔐</div>
+      <h2>Admin Access</h2>
+      <p>Enter the admin password to manage all complaints.</p>
+      <div class="fgroup">
+        <input class="finput" type="password" id="adminPass" placeholder="Password…" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Login →</button>
+    </div>
+    <div id="adminDash" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div><div class="section-title">Admin Dashboard</div><div class="section-sub">Manage &amp; resolve resident complaints</div></div>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()">Logout</button>
+      </div>
+      <div class="a-stats" id="aStats"></div>
+      <div class="filter-row">
+        <select class="fchip" id="aCat"  onchange="renderAdmin()">
+          <option value="">All Categories</option>
+          <option>Maintenance</option><option>Cleanliness</option><option>Water</option>
+          <option>Electricity</option><option>Internet / WiFi</option><option>Mess / Food</option>
+          <option>Behaviour Issues</option><option>Other</option>
+        </select>
+        <select class="fchip" id="aStat" onchange="renderAdmin()">
+          <option value="">All Status</option>
+          <option>Pending</option><option>In Progress</option><option>Resolved</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 Clear All</button>
+      </div>
+      <div id="adminList"><div class="loader"><div class="spinner"></div><div class="loader-text">Loading…</div></div></div>
+    </div>
+  </section>
+
+ </div><!-- /main-inner -->
+ <footer>
+   <div class="footer-logo">🏠 H1 Hostel Portal</div>
+   <div class="footer-tag">Built for the residents of H1 Hostel, Nirma University to improve our shared living space.</div>
+   <div class="footer-copy">© 2025 H1 Hostel · Nirma University, Ahmedabad</div>
+ </footer>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="bnav-item active" id="bn-home"   onclick="navTo('home')">  <div class="bnav-icon-wrap"><div class="bnav-icon">🏠</div></div><span class="bnav-label">Home</span></button>
+  <button class="bnav-item"        id="bn-submit" onclick="navTo('submit')"><div class="bnav-icon-wrap"><div class="bnav-icon">📝</div></div><span class="bnav-label">Submit</span></button>
+  <button class="bnav-item"        id="bn-log"    onclick="navTo('log')">   <div class="bnav-icon-wrap"><div class="bnav-icon">📋</div></div><span class="bnav-label">Log</span></button>
+  <button class="bnav-item"        id="bn-admin"  onclick="navTo('admin')"> <div class="bnav-icon-wrap"><div class="bnav-icon">🔐</div></div><span class="bnav-label">Admin</span></button>
+</nav>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;padding:20px;cursor:zoom-out;">
+  <img id="lightbox-img" src="" style="max-width:100%;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.6);" alt="Full photo"/>
+  <button onclick="closeLightbox()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="tIcon">✅</div>
+  <div><div class="toast-title" id="tTitle">Done!</div><div class="toast-msg" id="tMsg">Action completed.</div></div>
+</div>
+
+<script>
+/* ════════════════════════════════════
+   STORAGE — shared via window.storage when
+   running as a Claude artifact, falls back
+   to localStorage for standalone use.
+   shared:true  → everyone sees the same data
+   ════════════════════════════════════ */
+const KEY = 'h1_complaints_v3';
+
+const Store = {
+  async load() {
+    /* Try shared cloud storage first (Claude artifact env) */
+    if (window.storage) {
+      try {
+        const r = await window.storage.get(KEY, true);
+        if (r && r.value) return JSON.parse(r.value);
+      } catch(e) { console.warn('cloud get failed', e); }
+    }
+    /* Fallback: localStorage (standalone HTML) */
+    try {
+      const raw = localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+  async save(data) {
+    const val = JSON.stringify(data);
+    /* Save to shared cloud storage */
+    if (window.storage) {
+      try { await window.storage.set(KEY, val, true); } catch(e) { console.warn('cloud set failed', e); }
+    }
+    /* Also save locally as backup */
+    try { localStorage.setItem(KEY, val); } catch {}
+  }
+};
+
+/* ════ CONSTANTS ════ */
+const ICONS = {
+  'Maintenance':'🔧','Cleanliness':'🧹','Water':'💧','Electricity':'⚡',
+  'Internet / WiFi':'📡','Mess / Food':'🍽','Behaviour Issues':'🤝','Other':'📌'
+};
+const CATS = Object.keys(ICONS);
+
+/* ════ STATE ════ */
+let complaints = [];
+let selUrgency = '';
+let adminIn    = false;
+let toastTmr;
+
+/* ════ BOOT ════ */
+async function boot() {
+  applyTheme();
+  const saved = await Store.load();
+  if (saved && saved.length > 0) {
+    complaints = saved;
+  } else {
+    complaints = makeSeedData();
+    await Store.save(complaints);
+  }
+  renderHome();
+  renderLog();
+}
+
+/* ════ NAVIGATION ════ */
+function navTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const bn = document.getElementById('bn-' + id);
+  if (bn) bn.classList.add('active');
+  document.querySelectorAll('.dtab').forEach(b => b.classList.toggle('active', b.dataset.page === id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (id === 'home')  renderHome();
+  if (id === 'log')   renderLog();
+  if (id === 'admin') { renderAdminStats(); if (adminIn) renderAdmin(); }
+}
+
+/* ════ DARK MODE ════ */
+function applyTheme() {
+  const t = localStorage.getItem('h1_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('darkBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+function toggleDark() {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('darkBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('h1_theme', next);
+}
+
+/* ════ TOAST ════ */
+function showToast(icon, title, msg) {
+  clearTimeout(toastTmr);
+  const el = document.getElementById('toast');
+  document.getElementById('tIcon').textContent  = icon;
+  document.getElementById('tTitle').textContent = title;
+  document.getElementById('tMsg').textContent   = msg;
+  el.classList.add('show');
+  toastTmr = setTimeout(() => el.classList.remove('show'), 4200);
+}
+
+/* ════ HOME ════ */
+function renderHome() {
+  const total    = complaints.length;
+  const pending  = complaints.filter(c => c.status === 'Pending').length;
+  const inprog   = complaints.filter(c => c.status === 'In Progress').length;
+  const resolved = complaints.filter(c => c.status === 'Resolved').length;
+
+  document.getElementById('statsGrid').innerHTML =
+    [['📋',total,'Total'],['⏳',pending,'Pending'],['🔄',inprog,'In Progress'],['✅',resolved,'Resolved']]
+    .map(([ic,n,lb],i) => `<div class="stat-card" style="animation-delay:${i*.07}s"><div class="stat-icon">${ic}</div><div class="stat-num">${n}</div><div class="stat-label">${lb}</div></div>`)
+    .join('');
+
+  const counts = {};
+  CATS.forEach(c => counts[c] = complaints.filter(x => x.category === c).length);
+  const maxN = Math.max(...Object.values(counts), 1);
+
+  document.getElementById('issuesList').innerHTML =
+    [...CATS].sort((a,b) => counts[b]-counts[a]).map(cat => `
+      <div class="issue-row">
+        <span class="issue-emoji">${ICONS[cat]}</span>
+        <div class="issue-info">
+          <div class="issue-name">${cat}</div>
+          <div class="issue-bar-bg"><div class="issue-bar-fill" style="width:${(counts[cat]/maxN)*100}%"></div></div>
+        </div>
+        <div class="issue-count">${counts[cat]} case${counts[cat]!==1?'s':''}</div>
+      </div>`).join('');
+}
+
+/* ════ SUBMIT ════ */
+function setUrgency(level) {
+  selUrgency = level;
+  ['Low','Medium','High'].forEach(l => {
+    const btn = document.getElementById('up-' + l.toLowerCase());
+    btn.className = 'urgency-pill' + (l === level ? ' u-' + l.toLowerCase() : '');
+  });
+}
+function handleUpload(input) {
+  const file = input.files[0];
+  if (!file) { document.getElementById('upload-name').textContent = ''; return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    window._pendingImageB64 = e.target.result; // store base64 string
+    document.getElementById('upload-name').innerHTML =
+      `<img src="${e.target.result}" style="max-height:80px;max-width:100%;border-radius:6px;margin-top:6px;object-fit:cover;" alt="preview"/>
+       <div style="margin-top:4px;">📷 ${file.name}</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+async function submitComplaint() {
+  const room = document.getElementById('f-room').value.trim();
+  const cat  = document.getElementById('f-cat').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  if (!room || !cat || !desc || !selUrgency) {
+    showToast('⚠️','Missing Fields','Please fill Room, Category, Description and Urgency.');
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  const c = {
+    id: uid(), name: document.getElementById('f-name').value.trim() || 'Anonymous',
+    room, category:cat, description:desc, urgency:selUrgency,
+    status:'Pending',
+    image: window._pendingImageB64 || null,
+    date: new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}),
+    ts: Date.now()
+  };
+  complaints.unshift(c);
+  await Store.save(complaints);
+
+  ['f-name','f-room','f-desc'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-cat').value='';
+  document.getElementById('f-img').value='';
+  document.getElementById('upload-name').innerHTML='';
+  window._pendingImageB64 = null;
+  selUrgency='';
+  ['Low','Medium','High'].forEach(l => document.getElementById('up-'+l.toLowerCase()).className='urgency-pill');
+  btn.disabled=false; btn.innerHTML='Submit Complaint →';
+  showToast('✅','Complaint Logged!',c.id + ' submitted successfully.');
+}
+
+/* ════ LOG ════ */
+function renderLog() {
+  const search = (document.getElementById('logSearch')?.value||'').toLowerCase();
+  const cat    = document.getElementById('logCat')?.value||'';
+  const status = document.getElementById('logStatus')?.value||'';
+  let list = complaints.filter(c => {
+    if (cat    && c.category!==cat)    return false;
+    if (status && c.status!==status)   return false;
+    if (search && !c.id.toLowerCase().includes(search) &&
+                  !c.description.toLowerCase().includes(search) &&
+                  !c.room.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const el = document.getElementById('logList');
+  if (!list.length) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><h3>Nothing found</h3><p>Try different filters or submit a new complaint.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map((c,i) => {
+    const bc = c.status==='Resolved'?'badge-resolved':c.status==='In Progress'?'badge-progress':'badge-pending';
+    return `<div class="c-card${c.status==='Resolved'?' resolved':''}" style="animation-delay:${i*.04}s">
+      <div class="c-top">
+        <div><div class="c-id">${c.id}</div><div class="c-room">Room ${c.room} · ${c.name}</div></div>
+        <span class="badge ${bc}">${c.status.toUpperCase()}</span>
+      </div>
+      <div class="c-cat">${ICONS[c.category]||'📌'} ${c.category}</div>
+      <div class="c-desc">${c.description}</div>
+      ${c.image ? `<img src="${c.image}" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:10px;border:1px solid var(--border);" alt="Complaint photo" onclick="openImg(this)" />` : ''}
+      <div class="c-foot">
+        <span class="c-meta">📅 ${c.date}</span>
+        <span class="c-meta"><span class="udot ud-${c.urgency.toLowerCase()}"></span> ${c.urgency}</span>
+      </div>
+      <div class="resolved-banner">✅ This complaint has been resolved by hostel authorities.</div>
+    </div>`;
+  }).join('');
+}
+
+/* ════ ADMIN ════ */
+function doLogin() {
+  if (document.getElementById('adminPass').value === 'h1admin') {
+    adminIn = true;
+    document.getElementById('adminLogin').style.display='none';
+    document.getElementById('adminDash').style.display='block';
+    renderAdminStats(); renderAdmin();
+  } else { showToast('❌','Wrong Password','Incorrect password. Please try again.'); }
+}
+function doLogout() {
+  adminIn=false;
+  document.getElementById('adminLogin').style.display='block';
+  document.getElementById('adminDash').style.display='none';
+  document.getElementById('adminPass').value='';
+}
+function renderAdminStats() {
+  document.getElementById('aStats').innerHTML =
+    [['📋',complaints.length,'Total',''],
+     ['⏳',complaints.filter(c=>c.status==='Pending').length,'Pending','color:var(--pending)'],
+     ['🔄',complaints.filter(c=>c.status==='In Progress').length,'In Progress','color:var(--warning)'],
+     ['✅',complaints.filter(c=>c.status==='Resolved').length,'Resolved','color:var(--success)']]
+    .map(([ic,n,lb,st])=>`<div class="a-stat"><div class="a-stat-num" style="${st}">${n}</div><div class="a-stat-label">${ic} ${lb}</div></div>`)
+    .join('');
+}
+function renderAdmin() {
+  if (!adminIn) return;
+  const cat  = document.getElementById('aCat')?.value||'';
+  const stat = document.getElementById('aStat')?.value||'';
+  let list = complaints.filter(c=>{
+    if(cat&&c.category!==cat)return false;
+    if(stat&&c.status!==stat)return false;
+    return true;
+  });
+  const el = document.getElementById('adminList');
+  if (!list.length) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📂</div><h3>No complaints</h3><p>Nothing matches the current filter.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map((c,i)=>{
+    const bc = c.status==='Resolved'?'badge-resolved':c.status==='In Progress'?'badge-progress':'badge-pending';
+    return `<div class="admin-card" style="animation-delay:${i*.03}s">
+      <div class="admin-top">
+        <div><div class="admin-id">${c.id} · Room ${c.room}</div><div class="admin-cat">${ICONS[c.category]||'📌'} ${c.category}</div></div>
+        <span class="badge ${bc}">${c.status.toUpperCase()}</span>
+      </div>
+      <div class="admin-desc">${c.description}</div>
+      ${c.image ? `<img src="${c.image}" style="width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-bottom:9px;border:1px solid var(--border);cursor:zoom-in;" alt="Complaint photo" onclick="openImg(this)" />` : ''}
+      <div class="admin-chips">
+        <span class="achip">👤 ${c.name}</span>
+        <span class="achip">📅 ${c.date}</span>
+        <span class="achip"><span class="udot ud-${c.urgency.toLowerCase()}" style="margin-right:3px"></span>${c.urgency}</span>
+      </div>
+      <div class="admin-actions">
+        <select class="status-sel" onchange="updateStatus('${c.id}',this.value)">
+          <option ${c.status==='Pending'?'selected':''}>Pending</option>
+          <option ${c.status==='In Progress'?'selected':''}>In Progress</option>
+          <option ${c.status==='Resolved'?'selected':''}>Resolved</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="delComplaint('${c.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function updateStatus(id, newStatus) {
+  const idx = complaints.findIndex(c=>c.id===id);
+  if(idx<0)return;
+  complaints[idx].status = newStatus;
+  await Store.save(complaints);
+  renderAdminStats(); renderAdmin();
+  showToast(newStatus==='Resolved'?'✅':'🔄',
+    newStatus==='Resolved'?'Resolved!':'Updated',
+    'Complaint '+id+' → '+newStatus);
+}
+async function delComplaint(id) {
+  if(!confirm('Delete complaint '+id+'? This cannot be undone.'))return;
+  complaints = complaints.filter(c=>c.id!==id);
+  await Store.save(complaints);
+  renderAdminStats(); renderAdmin();
+  showToast('🗑','Deleted','Complaint '+id+' removed.');
+}
+async function clearAll() {
+  if(!confirm('Delete ALL complaints? This cannot be undone.'))return;
+  complaints=[];
+  await Store.save(complaints);
+  renderAdminStats(); renderAdmin();
+  showToast('🗑','Cleared','All complaints removed.');
+}
+
+/* ════ HELPERS ════ */
+function uid(){return 'H1-'+Date.now().toString(36).toUpperCase().slice(-4)+Math.random().toString(36).slice(2,5).toUpperCase();}
+function fmtDate(ts){return new Date(ts).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});}
+
+function makeSeedData() {
+  const now = Date.now();
+  return [
+    {id:uid(),name:'Anonymous',    room:'104',category:'Water',           description:'No hot water since Monday morning. Geyser in Block B appears broken.',                             urgency:'High',  status:'In Progress',date:fmtDate(now-864e5*0),ts:now-864e5*0},
+    {id:uid(),name:'Rohan Shah',   room:'302',category:'Internet / WiFi', description:'WiFi speed drops to under 1 Mbps after 9 PM on 3rd floor. Unusable for assignments.',             urgency:'Medium',status:'Pending',    date:fmtDate(now-864e5*1),ts:now-864e5*1},
+    {id:uid(),name:'Anonymous',    room:'215',category:'Cleanliness',     description:'Common washroom on 2nd floor not cleaned regularly. Strong odour throughout the day.',              urgency:'High',  status:'Pending',    date:fmtDate(now-864e5*2),ts:now-864e5*2},
+    {id:uid(),name:'Priya Desai',  room:'118',category:'Maintenance',     description:'Ceiling fan makes loud rattling noise and wobbles dangerously. Needs urgent repair.',               urgency:'High',  status:'Resolved',   date:fmtDate(now-864e5*3),ts:now-864e5*3},
+    {id:uid(),name:'Anonymous',    room:'401',category:'Mess / Food',     description:'Breakfast quality declining. Dal undercooked and vegetables lacking salt.',                         urgency:'Low',   status:'Pending',    date:fmtDate(now-864e5*4),ts:now-864e5*4},
+    {id:uid(),name:'Karan Patel',  room:'206',category:'Electricity',     description:'Power socket near study desk is completely dead. Cannot charge laptop for assignments.',           urgency:'Medium',status:'In Progress',date:fmtDate(now-864e5*5),ts:now-864e5*5},
+    {id:uid(),name:'Anonymous',    room:'309',category:'Cleanliness',     description:'Dustbins in corridor overflowing. Not emptied for three days.',                                    urgency:'Medium',status:'Pending',    date:fmtDate(now-864e5*6),ts:now-864e5*6},
+    {id:uid(),name:'Neha Sharma',  room:'412',category:'Maintenance',     description:'Bathroom door lock broken. Immediate fix needed for privacy and safety.',                          urgency:'High',  status:'Resolved',   date:fmtDate(now-864e5*7),ts:now-864e5*7},
+  ];
+}
+
+/* ════ LIGHTBOX ════ */
+function openImg(imgEl) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = imgEl.src;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLightbox(); });
+
+/* ════ START ════ */
+boot();
+</script>
+</body>
+</html>
