@@ -460,36 +460,41 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:22px
 
 <script>
 /* ════════════════════════════════════
-   STORAGE — shared via window.storage when
-   running as a Claude artifact, falls back
-   to localStorage for standalone use.
-   shared:true  → everyone sees the same data
+   FIREBASE REALTIME DATABASE STORAGE
+   All users share the same live data.
    ════════════════════════════════════ */
-const KEY = 'h1_complaints_v3';
+const FB_URL  = 'https://h1-hostel-portal-default-rtdb.firebaseio.com';
+const FB_KEY  = 'AIzaSyCVdDpOxQ26NdFy08rIIIQRzSpXSAffkaI';
+const DB_PATH = '/complaints.json';
 
 const Store = {
   async load() {
-    /* Try shared cloud storage first (Claude artifact env) */
-    if (window.storage) {
-      try {
-        const r = await window.storage.get(KEY, true);
-        if (r && r.value) return JSON.parse(r.value);
-      } catch(e) { console.warn('cloud get failed', e); }
-    }
-    /* Fallback: localStorage (standalone HTML) */
     try {
-      const raw = localStorage.getItem(KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+      const res = await fetch(`${FB_URL}${DB_PATH}?auth=${FB_KEY}`);
+      if (!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      if (!data) return null;
+      /* Firebase returns an object keyed by push IDs — convert to array */
+      if (Array.isArray(data)) return data;
+      return Object.values(data);
+    } catch(e) {
+      console.warn('Firebase load failed, using localStorage', e);
+      try { const r = localStorage.getItem('h1_fb_backup'); return r ? JSON.parse(r) : null; } catch { return null; }
+    }
   },
   async save(data) {
-    const val = JSON.stringify(data);
-    /* Save to shared cloud storage */
-    if (window.storage) {
-      try { await window.storage.set(KEY, val, true); } catch(e) { console.warn('cloud set failed', e); }
+    try {
+      const res = await fetch(`${FB_URL}${DB_PATH}?auth=${FB_KEY}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('save failed');
+    } catch(e) {
+      console.warn('Firebase save failed, saving locally', e);
     }
-    /* Also save locally as backup */
-    try { localStorage.setItem(KEY, val); } catch {}
+    /* Always keep a local backup too */
+    try { localStorage.setItem('h1_fb_backup', JSON.stringify(data)); } catch {}
   }
 };
 
