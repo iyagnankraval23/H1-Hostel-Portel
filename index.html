@@ -460,41 +460,78 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:22px
 
 <script>
 /* ════════════════════════════════════
-   FIREBASE REALTIME DATABASE STORAGE
-   All users share the same live data.
+   GOOGLE SHEETS STORAGE — JSONP
+   Bypasses CORS completely.
+   Works from GitHub Pages on any device.
    ════════════════════════════════════ */
-const FB_URL  = 'https://h1-hostel-portal-default-rtdb.firebaseio.com';
-const FB_KEY  = 'AIzaSyCVdDpOxQ26NdFy08rIIIQRzSpXSAffkaI';
-const DB_PATH = '/complaints.json';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxC-20XI33yhtot-TMTAtKw3ncIf_Xdwd6EG_brH6MOXErlL33HJMyEXkRiaIbYvRsv/exec';
+
+/* Core JSONP caller — injects a <script> tag, gets response via callback */
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'h1cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('JSONP timeout'));
+    }, 12000);
+
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+
+    const qs = Object.entries({ ...params, callback: cbName })
+      .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    const script = document.createElement('script');
+    script.src = `${SCRIPT_URL}?${qs}`;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('JSONP script error'));
+    };
+    document.head.appendChild(script);
+  });
+}
 
 const Store = {
   async load() {
     try {
-      const res = await fetch(`${FB_URL}${DB_PATH}?auth=${FB_KEY}`);
-      if (!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      if (!data) return null;
-      /* Firebase returns an object keyed by push IDs — convert to array */
-      if (Array.isArray(data)) return data;
-      return Object.values(data);
+      const data = await jsonp({ action: 'load' });
+      if (Array.isArray(data)) {
+        try { localStorage.setItem('h1_backup', JSON.stringify(data)); } catch {}
+        return data;
+      }
+      return null;
     } catch(e) {
-      console.warn('Firebase load failed, using localStorage', e);
-      try { const r = localStorage.getItem('h1_fb_backup'); return r ? JSON.parse(r) : null; } catch { return null; }
+      console.warn('Sheet load failed, using local backup', e);
+      try { const r = localStorage.getItem('h1_backup'); return r ? JSON.parse(r) : null; } catch { return null; }
     }
   },
+  async add(c) {
+    try { await jsonp({ action: 'add', data: JSON.stringify(c) }); }
+    catch(e) { console.warn('add failed', e); }
+    try { localStorage.setItem('h1_backup', JSON.stringify(complaints)); } catch {}
+  },
+  async updateStatus(id, status) {
+    try { await jsonp({ action: 'updateStatus', id, status }); }
+    catch(e) { console.warn('updateStatus failed', e); }
+    try { localStorage.setItem('h1_backup', JSON.stringify(complaints)); } catch {}
+  },
+  async delete(id) {
+    try { await jsonp({ action: 'delete', id }); }
+    catch(e) { console.warn('delete failed', e); }
+    try { localStorage.setItem('h1_backup', JSON.stringify(complaints)); } catch {}
+  },
+  async clearAll() {
+    try { await jsonp({ action: 'clearAll' }); }
+    catch(e) { console.warn('clearAll failed', e); }
+    try { localStorage.removeItem('h1_backup'); } catch {}
+  },
   async save(data) {
-    try {
-      const res = await fetch(`${FB_URL}${DB_PATH}?auth=${FB_KEY}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('save failed');
-    } catch(e) {
-      console.warn('Firebase save failed, saving locally', e);
-    }
-    /* Always keep a local backup too */
-    try { localStorage.setItem('h1_fb_backup', JSON.stringify(data)); } catch {}
+    try { localStorage.setItem('h1_backup', JSON.stringify(data)); } catch {}
   }
 };
 
@@ -514,12 +551,15 @@ let toastTmr;
 /* ════ BOOT ════ */
 async function boot() {
   applyTheme();
+  /* Show loading spinner on log page while fetching */
+  document.getElementById('logList').innerHTML = '<div class="loader"><div class="spinner"></div><div class="loader-text">Connecting to database…</div></div>';
   const saved = await Store.load();
   if (saved && saved.length > 0) {
     complaints = saved;
   } else {
     complaints = makeSeedData();
-    await Store.save(complaints);
+    /* Add each seed to the sheet */
+    for (const c of complaints) await Store.add(c);
   }
   renderHome();
   renderLog();
@@ -631,7 +671,7 @@ async function submitComplaint() {
     ts: Date.now()
   };
   complaints.unshift(c);
-  await Store.save(complaints);
+  await Store.add(c);
 
   ['f-name','f-room','f-desc'].forEach(id => document.getElementById(id).value='');
   document.getElementById('f-cat').value='';
@@ -748,7 +788,7 @@ async function updateStatus(id, newStatus) {
   const idx = complaints.findIndex(c=>c.id===id);
   if(idx<0)return;
   complaints[idx].status = newStatus;
-  await Store.save(complaints);
+  await Store.updateStatus(id, newStatus);
   renderAdminStats(); renderAdmin();
   showToast(newStatus==='Resolved'?'✅':'🔄',
     newStatus==='Resolved'?'Resolved!':'Updated',
@@ -757,14 +797,14 @@ async function updateStatus(id, newStatus) {
 async function delComplaint(id) {
   if(!confirm('Delete complaint '+id+'? This cannot be undone.'))return;
   complaints = complaints.filter(c=>c.id!==id);
-  await Store.save(complaints);
+  await Store.delete(id);
   renderAdminStats(); renderAdmin();
   showToast('🗑','Deleted','Complaint '+id+' removed.');
 }
 async function clearAll() {
   if(!confirm('Delete ALL complaints? This cannot be undone.'))return;
   complaints=[];
-  await Store.save(complaints);
+  await Store.clearAll();
   renderAdminStats(); renderAdmin();
   showToast('🗑','Cleared','All complaints removed.');
 }
